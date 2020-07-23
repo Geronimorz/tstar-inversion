@@ -1,33 +1,40 @@
 # tstar-inversion
 
-Step 1. Run DATA_download.xml
+## Step 1. Run DATA_download.xml
+
 Use SOD to download sac files. If there doesn't exist a file containing P and S wave arrivals, use 'ppk' to pick them.
 
 INPUT:  (csv)           ==> csv file saving event time, latitude, longitude and depth
+
 OUTPUT: (dirseismogram) ==> raw sac files
 
 
 
-Step 2. Run cut.py (Subroutine: haversine.py)
+## Step 2. Run cut.py (Subroutine: haversine.py)
+
 Preprocess the sac files. Here we assume that all the channels are BHE, BHN, and BHZ. Create 'dbjadir' to save P wave arrival, S wave arrival, distance and back azimuth for each station-event pair.
 
 INPUT:  (eventname)     ==> all the events used in the inversion
-        (stations)      ==> station latitude and longitude
+&#8195 &#8195 &#8195 &#8195(stations)      ==> station latitude and longitude
         (dirseismogram) ==> raw sac files
+        
 OUTPUT: (dbjadir)       ==> P wave arrival, S wave arrival, distance and back azimuth for each station-event
         (sacdir)        ==> preprocessed sac files
 
 
 
-Step 3. Run mkgsfl.py (Subroutines: momcalc.py globaldb.py)
+## Step 3. Run mkgsfl.py (Subroutines: momcalc.py globaldb.py)
+
 Create geometrical spreading files for P and S waves.
 
 INPUT:  (eventname)       ==> all the events used in the inversion
+
 OUTPUT: (pgsfile,sgsfile) ==> geometrical spreading files
 
 
 
-Step 4. Run main_tstar_MoPSresspec.py (Subroutines: globaldb.py tstarsub.py multitaper.py seissign.py)
+## Step 4. Run main_tstar_MoPSresspec.py (Subroutines: globaldb.py tstarsub.py multitaper.py seissign.py)
+
 Set up mtspec.py first. Then invert for t* and calculate site-effect factors.
 
 INPUT:  (mag_lst)           ==> exact magnitudes list(optional).
@@ -37,6 +44,7 @@ INPUT:  (mag_lst)           ==> exact magnitudes list(optional).
         (sacdir)            ==> preprocessed sac files
         (csv)               ==> csv file saving event time, latitude, longitude and depth
         (dbjadir)           ==> P wave arrival, S wave arrival, distance and back azimuth for each station-event
+        
 OUTPUT: (eventfocal027.log) ==> corner frequency and magnitude for each event
         (bestfc.lst)        ==> corner frequency for P wave, magnitude and ln(M0)(seismic moment) for each event
         (result)            ==> spectrum, t* and misfit for each station-event pair
