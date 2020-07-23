@@ -1,1 +1,102 @@
 # tstar-inversion
+
+Step 1. Run DATA_download.xml
+Use SOD to download sac files. If there doesn't exist a file containing P and S wave arrivals, use 'ppk' to pick them.
+
+INPUT:  (csv)           ==> csv file saving event time, latitude, longitude and depth
+OUTPUT: (dirseismogram) ==> raw sac files
+
+
+
+Step 2. Run cut.py (Subroutine: haversine.py)
+Preprocess the sac files. Here we assume that all the channels are BHE, BHN, and BHZ. Create 'dbjadir' to save P wave arrival, S wave arrival, distance and back azimuth for each station-event pair.
+
+INPUT:  (eventname)     ==> all the events used in the inversion
+        (stations)      ==> station latitude and longitude
+        (dirseismogram) ==> raw sac files
+OUTPUT: (dbjadir)       ==> P wave arrival, S wave arrival, distance and back azimuth for each station-event
+        (sacdir)        ==> preprocessed sac files
+
+
+
+Step 3. Run mkgsfl.py (Subroutines: momcalc.py globaldb.py)
+Create geometrical spreading files for P and S waves.
+
+INPUT:  (eventname)       ==> all the events used in the inversion
+OUTPUT: (pgsfile,sgsfile) ==> geometrical spreading files
+
+
+
+Step 4. Run main_tstar_MoPSresspec.py (Subroutines: globaldb.py tstarsub.py multitaper.py seissign.py)
+Set up mtspec.py first. Then invert for t* and calculate site-effect factors.
+
+INPUT:  (mag_lst)           ==> exact magnitudes list(optional).
+        (fc_lst)            ==> exact corner frequencies list(optional). If it's not provided, use grid search to find the best corner frequency.
+        (eventname)         ==> all the events used in the inversion
+        (gsfile)            ==> geometrical spreading files
+        (sacdir)            ==> preprocessed sac files
+        (csv)               ==> csv file saving event time, latitude, longitude and depth
+        (dbjadir)           ==> P wave arrival, S wave arrival, distance and back azimuth for each station-event
+OUTPUT: (eventfocal027.log) ==> corner frequency and magnitude for each event
+        (bestfc.lst)        ==> corner frequency for P wave, magnitude and ln(M0)(seismic moment) for each event
+        (result)            ==> spectrum, t* and misfit for each station-event pair
+        (plotfall)          ==> corner frequency versus L2 norm and log10(moment) for each event
+        (plottstar-fc)      ==> corner frequency versus t* perturbation for each station-event pair
+        (plotspec)          ==> spectrums in frequency domain
+        (plotseis)          ==> spectrums in time domain
+        (plotsnr)           ==> signal-to-noise ratio
+
+
+
+Step 5. Run stacksite.py
+Calculate average site-effect factor for each station.
+
+INPUT:  (stafile)   ==> station latitude and longitude
+        (sitefile)  ==> all the site files
+OUTPUT: (sitespec)  ==> averaged site-effect factors
+
+
+
+Step 6. Run main_tstar_MoPScorsite.py (Subroutines: globaldb.py tstarsub.py multitaper.py seissign.py)
+
+Invert for t* with site effects corrected.
+
+INPUT:  (sitespec)          ==> averaged site-effect factors(only needed for main_tstar_MoPScorsite.py)
+        (mag_lst)           ==> exact magnitudes list(optional).
+        (fc_lst)            ==> exact corner frequencies list(optional). If it's not provided, use grid search to find the best corner frequency.
+        (eventname)         ==> all the events used in the inversion
+        (gsfile)            ==> geometrical spreading files
+        (sacdir)            ==> preprocessed sac files
+        (csv)               ==> csv file saving event time, latitude, longitude and depth
+        (dbjadir)           ==> P wave arrival, S wave arrival, distance and back azimuth for each station-event
+OUTPUT: (eventfocal027.log) ==> corner frequency and magnitude for each event
+        (bestfc.lst)        ==> corner frequency for P wave, magnitude and ln(M0)(seismic moment) for each event
+        (result)            ==> spectrum, tstar and misfit for each station-event pair
+        (plotfall)          ==> corner frequency versus L2 norm and log10(moment) for each event
+        (plottstar-fc)      ==> corner frequency versus t* perturbation for each station-event pair
+        (plotspec)          ==> spectrums in frequency domain
+        (plotseis)          ==> spectrums in time domain
+        (plotsnr)           ==> signal-to-noise ratio
+
+
+
+
+MAIN FOLDERS
+* processedSeismograms    sac files that have been preprocessed
+* GS    P and S wave geometrical spreading values for each station-event pair
+* dbja    P wave arrival, S wave arrival, distance and back azimuth for each station-event pair
+* sitespec    P and S wave site-effect factors at certain frequency band for each station
+
+
+
+
+SCRIPTS
+* main_tstar_MoPSresspec.py    main program to invert t* for the first time, calculate site-effect factors
+* main_tstar_MoPScorsite.py    main program to invert t* for tomography with site effects correted
+* cut.py    preprocess sac files and create dbjadir
+* globaldb.py    read database, set global variables
+* haversine.py    compute great-circle distances
+* mkgsfl.py and momcalc.py    create geometric spreading files for P and S wave
+* tstarsub.py    subroutines for inverting t*
+* seissigh.py    functions to analyse seismic signal
+* stacksite.py    stack all the site files and get averaged site files
