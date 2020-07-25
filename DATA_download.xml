@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<sod>
+  <eventArm>
+    <CSVEventSource>
+      <filename>/Users/zhangyurong/tstar/download/event.csv</filename>
+    </CSVEventSource>
+    <printlineEventProcess/>
+  </eventArm>
+  <networkArm>
+    <fdsnStation/>
+    <stationCode>LCO</stationCode>
+    <!-- <printlineStationProcess/> -->
+    <sacPoleZeroWriter/>
+    <responseWriter/>
+    <printlineChannelProcess/>
+  </networkArm>
+  <waveformArm>
+    <!-- <bandCodeHeuristic>B</bandCodeHeuristic> -->
+    <!--  <gainCodeHeuristic>H</gainCodeHeuristic> -->
+    <phaseRequest>
+      <model>prem</model>
+      <beginPhase>ttp</beginPhase>
+      <beginOffset>
+        <unit>SECOND</unit>
+        <value>-300</value>
+      </beginOffset>
+      <endPhase>s</endPhase>
+      <endOffset>
+        <unit>SECOND</unit>
+        <value>600</value>
+      </endOffset>
+    </phaseRequest>
+    <fdsnDataSelect/>
+    <rMean/>
+    <rTrend/>
+    <taper/>
+      <sacWriter>
+        <workingDir>processedSeismograms</workingDir>
+      </sacWriter>
+    <printlineSeismogramProcess/>
+  </waveformArm>
+</sod>
