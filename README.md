@@ -50,7 +50,7 @@ OUTPUT:
 
 ### Step 4. Run main_tstar_MoPSresspec.py (Subroutines: globaldb.py tstarsub.py multitaper.py seissign.py)
 
-Set up mtspec.py first. Then invert for t* and calculate site-effect factors.
+Set up mtspec first. It can be found at https://github.com/krischer/mtspec. Then invert for t* and calculate site-effect factors.
 
 INPUT:  
 
