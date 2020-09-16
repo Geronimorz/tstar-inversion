@@ -1558,7 +1558,7 @@ def buildd(saving,stalst,fc,POS,icase,lnM=0):
 
 
 
-def buildG(saving,stalst,alpha,POS,icase):
+def buildG(saving,stalst,alpha,POS,icase,mw_flag):
 ## Build G matrix
 ##      G = [[1, -pi*f1i*f1i**(-alpha), 0, ..., 0],             ##
 ##           [1, 0, -pi*f2i*f2i**(-alpha), ..., 0],             ##
@@ -1603,7 +1603,8 @@ def buildG(saving,stalst,alpha,POS,icase):
             oldblock=np.hstack((G,np.zeros((G.shape[0],1,len(alpha)))))
             newblock=np.hstack((np.zeros((Gblock.shape[0],G.shape[1],len(alpha))),Gblock))
             G=np.vstack((oldblock,newblock))
-    if POS.upper()=='P':
-        G=np.hstack((np.ones((G.shape[0],1,len(alpha))),G))
+    if mw_flag == False:
+        if POS.upper()=='P':
+            G=np.hstack((np.ones((G.shape[0],1,len(alpha))),G))
     return G
 
