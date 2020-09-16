@@ -23,10 +23,10 @@ snrcrtp2=[2.0,8.0,2.0]    ## MINIMUM [SNR,FREQUENCY BAND WIDTH] FOR t* INVERSION
 snrcrts1=[3.0,10.0,3.0]    ## MINIMUM [SNR,FREQUENCY BAND WIDTH] FOR FINDING BEST fc AND alpha
 snrcrts2=[2.0,8.0,2.0]    ## MINIMUM [SNR,FREQUENCY BAND WIDTH] FOR t* INVERSION
 lincor=[0.7,0.7,0.7]    ## MINIMUM LINEAR CORRELATION COEFFICIENTS
-misfitP=0.7    ## MINIMUM MISFIT FOR P WAVE MEASURED BY CORRELATIVE FUNCTION
-misfitP2=0.2    ## MAXIMUM L2 NORM FOR P WAVE
-misfitS=0.8    ## MINIMUM MISFIT FOR S WAVE MEASURED BY CORRELATIVE FUNCTION
-misfitS2=0.2    ## MAXIMUM L2 NORM FOR S WAVE
+misfitP=-1000  ## MINIMUM MISFIT FOR P WAVE MEASURED BY CORRELATIVE FUNCTION
+misfitP2=10   ## MAXIMUM L2 NORM FOR P WAVE
+misfitS=-1000    ## MINIMUM MISFIT FOR S WAVE MEASURED BY CORRELATIVE FUNCTION
+misfitS2=10   ## MAXIMUM L2 NORM FOR S WAVE
 
 ##fc=np.hstack((np.arange(loco,1.01,0.05),np.arange(1.1,(hico+0.51),0.1)))
 dstress=[0.1,50.0]   ## STRESS DROP IN MPa
@@ -40,13 +40,15 @@ dt=0.025
 beta=4000       ## SHEAR VELOCITY IN m/s FOR APPROXIMATING CORNER FREQUENCY
 doplotseis=False
 doplotsnr=False
-doplotspec=False
-plotspecloglog=True
-doplotfcts=True
-doplotfcall=True
+doplotspec=True
+plotspecloglog=False
+doplotfcts=False
+doplotfcall=False
+
 
 mag_flag=False    ## 'TRUE' MEANS THAT MAGNITUDE IS KNOWN 
-fc_flag=True    ## 'TRUE' MEANS THAT CORNER FREQUENCY IS KNOWN, OR GRID SEARCH WILL BE USED TO CALCULATE IT
+mw_flag=True   ## 'TRUE' MEANS THAT MOMENT MAGNITUDE IS KNOWN 
+fc_flag=False    ## 'TRUE' MEANS THAT CORNER FREQUENCY IS KNOWN, OR GRID SEARCH WILL BE USED TO CALCULATE IT
 
 # s=raw_input('Please input subdb and workdir: ')
 # subdb=s.split()[0]
@@ -65,12 +67,17 @@ alpha=[0.27]
 fcps=1.5       ## fc(P)/fc(S)
 stalst=[]
 oridlst=[]
-for name in open(namedir).readlines():
-    name = name.strip('\n')
-    if name is not None:
-        oridlst.append(name)
+# =============================================================================
+# for name in open(namedir).readlines():
+#     name = name.strip('\n')
+#     if name is not None:
+#         oridlst.append(name)
+# =============================================================================
 
-#oridlst=['Event_2008_02_18_08_51_03']
+# =============================================================================
+# oridlst=['Event_2008_08_31_06_45_05', 'Event_2008_11_13_11_12_30']
+# =============================================================================
+oridlst=['Event_2008_08_31_06_45_05']
 if mag_flag == False:
     maglst=[0.00] * 1088
 ##else:
@@ -97,6 +104,7 @@ figdir5='/Users/zhangyurong/tstar/workdir/specfig/plotfall'
 #figdir6='/Users/zhangyurong/tstar/workdir/specfig/plotfft'
 
 gsdir='/Users/zhangyurong/tstar/data/GS'
+mwlst='/Users/zhangyurong/tstar/data/List_EQs.txt'
 resultdir='./result'
 logfile='./eventfocal%03d.log' %(int(alpha[0]*100))
 ##statisfile = './statistics.log'
@@ -362,7 +370,7 @@ for ior in range(len(oridlst)):
         ## CORRECTIONS OF GS
         correcP=float(PGSTAB['gval'][PGSTAB['stalist'].index(sta)])
         if correcP==0:
-##            stafl.write('badcorrP! orid: %s sta: %s'%(orid, sta))
+##            stafl.write('badcorrP!    orid: %s sta: %s'%(orid, sta))
             print('Bad correction of P wave for station %s\n' % sta)
             continue
 ##        correcP=1/correcP   ## Cj
@@ -381,7 +389,7 @@ for ior in range(len(oridlst)):
         ##======= 2 MEANS LOWER QUALITY DATA FOR t* INVERSION =======##
 
         ##======= 1 MEANS HIGH QUALITY DATA FOR FINDING BEST fc AND alpha =======##        
-        doplot=True
+        doplot=False
         (sch,residp,resids,spec_px,freq_px,spec_sx,freq_sx,pspec,s1spec,s2spec,pfreq,s1freq,s2freq,pn_spec,s1n_spec,s2n_spec,pn_freq,s1n_freq,s2n_freq,frmn,frmx,
          goodP1,goodS1)=tstarsub.dospec(PWINDATA,SWINDATA1,SWINDATA2,dt,
                         SDATA,orid,sta,snrcrtp1,snrcrts1,lincor,chan,doplot)
@@ -440,6 +448,27 @@ for ior in range(len(oridlst)):
 ##    mo=10**(1.5*(ORIG['ml']-0.063)+9.095) ## MOMENT IN N*m
     ## CONVERTING mb FROM ISC TO Mw AND MOMENT TENSOR
 ##    Mwisc=0.85*ORIG['mb']+1.03  # Mw=0.85mb+1.03, Scordilis, 2006
+    
+    ## FIND CALCULATED MOMENT MAGNITUDE ##
+    if 2>1:
+        y1=float(orid.split('_')[1])
+        m1=float(orid.split('_')[2])
+        d1=float(orid.split('_')[3])
+        h1=float(orid.split('_')[4])
+        mi1=float(orid.split('_')[5])
+        for line in open(mwlst).readlines():
+            y=float(line.split()[0])
+            m=float(line.split()[1])
+            d=float(line.split()[2])
+            h=float(line.split()[3][0:2])
+            mi=float(line.split()[3][2:])
+            mo=float(line.split()[7])
+            if y==y1 and m==m1 and d==d1 and h==h1 and mi==mi1:
+                mw_calc=mo
+                momenP=pow(10,(mw_calc+10.73)*3.0/2.0)/1e7
+                lnmomenP_calc=np.log(momenP)
+                print(lnmomenP_calc,momenP,mw_calc)
+    
     Mwisc=1.54*ORIG['mb']-2.54  # Mw=1.54mb-2.54, Das et al., 2011 (PREFERED)
     mo=10**(1.5*Mwisc+9.095) ## MOMENT IN N*m
     fclow=0.49*((dstress[0]/mo)**(1.0/3.0))*beta*100
@@ -468,17 +497,25 @@ for ior in range(len(oridlst)):
     
     ## BUILD G MATRIX TO FIND BEST fc AND alpha
 
-    GP1=tstarsub.buildG(saving,staP1lst,alpha,'P',1)
+    GP1=tstarsub.buildG(saving,staP1lst,alpha,'P',1,mw_flag)
     tsfc=np.zeros((len(fc),len(staP1lst)))
     for ialco in range(len(alpha)):
         GPinv=np.linalg.inv(np.dot(GP1[:,:,ialco].transpose(),GP1[:,:,ialco]))
         for ifc in range(len(fc)):
     ## BUILD d MATRIX WITH VARIABLE CORNER FREQUENCY TO FIND BEST fc AND alpha
-            dataP1=tstarsub.buildd(saving,staP1lst,fc[ifc],'P',1)
+            if mw_flag == True:
+                lnmomenP=lnmomenP_calc
+                dataP1=tstarsub.buildd(saving,staP1lst,fc[ifc],'P',1,lnmomenP)
+            else:
+                dataP1=tstarsub.buildd(saving,staP1lst,fc[ifc],'P',1)
 ##            modelP,residuP,mrank,sv=lstsq(GP1[:,:,ialco],dataP1)
             modelP,residuP=nnls(GP1[:,:,ialco],dataP1[:,0])
-            lnmomenP=modelP[0]
-            tstarP=modelP[1:]
+            if mw_flag == True:
+                tstarP=modelP
+            else:
+                lnmomenP=modelP[0]
+                tstarP=modelP[1:]
+            
             L2P=residuP/np.sum(dataP1[:,0])
             vardatP=L2P/(dataP1.shape[0]-len(staP1lst)-1)
             lnmomenPerr=np.sqrt(vardatP*GPinv[0][0])
@@ -517,10 +554,17 @@ for ior in range(len(oridlst)):
         bestfcp = 12.68
 ##        tsfc=np.zeros((1,len(staP1lst)))
         for ialco in range(len(alpha)):
-            dataP1=tstarsub.buildd(saving,staP1lst,bestfcp,'P',1)
+            if mw_flag == True:
+                lnmomenP=lnmomenP_calc
+                dataP1=tstarsub.buildd(saving,staP1lst,bestfcp,'P',1,lnmomenP)
+            else:
+                dataP1=tstarsub.buildd(saving,staP1lst,bestfcp,'P',1)
             modelP,residuP=nnls(GP1[:,:,ialco],dataP1[:,0])
-            lnmomenP=modelP[0]
-            tstarP=modelP[1:]
+            if mw_flag == True:
+                tstarP=modelP
+            else:
+                tstarP=modelP[1:]
+                lnmomenP=modelP[0]
             L2P=residuP/np.sum(dataP1[:,0])
             minL2P=L2P
             vardatP=L2P/(dataP1.shape[0]-len(staP1lst)-1)
@@ -575,15 +619,23 @@ for ior in range(len(oridlst)):
             plt.ylabel('t* perturbation (%)')
             plt.savefig(g.figdir4+'/%s_%s_fcts.eps' % (orid,staP1lst[ista]))
     ## INVERT t*(P) WITH BEST fc AND alpha
-    dataP2=tstarsub.buildd(saving,staP2lst,bestfcp,'P',2)
-    GP2=tstarsub.buildG(saving,staP2lst,alpha,'P',2)
+    if mw_flag == True:
+        lnmomenP=lnmomenP_calc
+        dataP2=tstarsub.buildd(saving,staP2lst,bestfcp,'P',2,lnmomenP)
+    else:
+        dataP2=tstarsub.buildd(saving,staP2lst,bestfcp,'P',2)
+    GP2=tstarsub.buildG(saving,staP2lst,alpha,'P',2,mw_flag)
     ialco=alpha.index(bestalpha)
     GP2inv=np.linalg.inv(np.dot(GP2[:,:,ialco].transpose(),GP2[:,:,ialco]))
 ##    modelP,residuP,mrank,sv=lstsq(GP2[:,:,ialco],dataP2)
     modelP,residuP=nnls(GP2[:,:,ialco],dataP2[:,0])
-    lnmomenP=modelP[0]      ## MOMENT
-    fclist.write('%s   %.2f  %.1f  %f\n' % (orid,bestfcp,ORIG['mb'],lnmomenP))
-    tstarP=modelP[1:]       ## t*         
+    if mw_flag == True:
+        tstarP=modelP
+    else:
+        tstarP=modelP[1:]       ## t*     
+        lnmomenP=modelP[0]      ## MOMENT
+    fclist.write('%s   %.2f  %.1f  %f\n' % (orid,bestfcp,ORIG['mb'],lnmomenP))    
+    
     ## SAVE RESIDUL AND MISFIT OVER ALL
 ##    allPres=allPres+(residuP**2)/dataP2.shape[0]
 ##    allPmisfit=allPmisfit+residuP/(dataP2.shape[0])
@@ -618,7 +670,10 @@ for ior in range(len(oridlst)):
         var=(np.linalg.norm(dat-est)**2)/(ndat-2)    ## POSTERIOR VARIANCE USED AS PRIOR VARIANCE
         saving[sta][2]['tstar']=[tstarP[ista]]
         saving[sta][2]['misfit']=[np.sqrt(var*(ndat-2))/ndat]
-        saving[sta][2]['err']=[np.sqrt(var*GP2inv.diagonal()[ista+1])] ## cov(m)=cov(d)inv(G'G) FOR OVERDETERMINED PROBLEM
+        if mw_flag == True:
+            saving[sta][2]['err']=[np.sqrt(var*GP2inv.diagonal()[ista])] ## cov(m)=cov(d)inv(G'G) FOR OVERDETERMINED PROBLEM
+        else:
+            saving[sta][2]['err']=[np.sqrt(var*GP2inv.diagonal()[ista+1])]
         saving[sta][2]['aveATTEN']=[(1000*tstarP[ista]/saving[sta]['Ptt'])]
         if saving[sta][2]['good'][0]:
             (pfitting,pfitting1,pfitting2,pfitting3)=tstarsub.fitting(saving[sta],sta,orid,'P',lnmomenP,
@@ -668,14 +723,22 @@ for ior in range(len(oridlst)):
         print('Not enough good P wave record for %s.' % orid)
         continue  
     used += len(staP3lst) 
-    dataP3=tstarsub.buildd(saving,staP3lst,bestfcp,'P',3)
-    GP3=tstarsub.buildG(saving,staP3lst,alpha,'P',3)
+    if mw_flag == True:
+        lnmomenP=lnmomenP_calc
+        dataP3=tstarsub.buildd(saving,staP3lst,bestfcp,'P',3,lnmomenP)
+    else:
+        dataP3=tstarsub.buildd(saving,staP3lst,bestfcp,'P',3)
+    GP3=tstarsub.buildG(saving,staP3lst,alpha,'P',3,mw_flag)
     ialco=alpha.index(bestalpha)
     GP3inv=np.linalg.inv(np.dot(GP3[:,:,ialco].transpose(),GP3[:,:,ialco]))
 ##    modelP,residuP,mrank,sv=lstsq(GP3[:,:,ialco],dataP3)
     modelP,residuP=nnls(GP3[:,:,ialco],dataP3[:,0])
-    lnmomenP=modelP[0]      ## MOMENT
-    tstarP=modelP[1:]       ## t*
+    if mw_flag == True:
+        tstarP=modelP
+    else:
+        lnmomenP=modelP[0]      ## MOMENT
+        tstarP=modelP[1:]       ## t*
+        
 ##    ## SAVE RESIDUL AND MISFIT OVER ALL
 ##    allPres=allPres+(residuP**2)/dataP3.shape[0]
 ##    allPmisfit=allPmisfit+residuP/np.sqrt(dataP3.shape[0])
@@ -698,7 +761,10 @@ for ior in range(len(oridlst)):
 ##        saving[sta][3]['dat']=[dat]
         saving[sta][3]['tstar']=[tstarP[ista]]
         saving[sta][3]['misfit']=[np.sqrt(var*(ndat-2))/ndat]
-        saving[sta][3]['err']=[np.sqrt(var*GP3inv.diagonal()[ista+1])] ## cov(m)=cov(d)inv(G'G) FOR OVERDETERMINED PROBLEM
+        if mw_flag==True:
+            saving[sta][3]['err']=[np.sqrt(var*GP3inv.diagonal()[ista])] ## cov(m)=cov(d)inv(G'G) FOR OVERDETERMINED PROBLEM
+        else:
+            saving[sta][3]['err']=[np.sqrt(var*GP3inv.diagonal()[ista+1])]
         saving[sta][3]['aveATTEN']=[(1000*tstarP[ista]/saving[sta]['Ptt'])]
         saving[sta][3]['resspec']=[tstarsub.calresspec(saving[sta],sta,orid,'P',lnmomenP,
                                                      bestfcp,bestalpha)]
@@ -707,8 +773,10 @@ for ior in range(len(oridlst)):
             
     ## MOMENT MAGNITUDE Mw
     momenP=np.exp(lnmomenP)
-    Mw=float(2.0/3.0*np.log10(momenP*1e7)-10.73)
-    logfl.write('Mw = %.2f, Mwisc = %.2f\n' % (Mw,Mwisc))
+    Mw=float(2.0/3.0*(np.log10(momenP*1e7))-10.73)
+    print(lnmomenP,momenP,Mw)
+#    logfl.write('Mw = %.2f, Mwisc = %.2f\n' % (Mw,Mwisc))
+    logfl.write('Mw_inv = %.2f, Mw_calc = %.2f\n' % (Mw,mw_calc))
 
     ## OUTPUT P RESIDUAL SPECTRA FOR SITE EFFECTS
     for icntp in range(len(staP3lst)):
@@ -799,7 +867,7 @@ for ior in range(len(oridlst)):
 # =============================================================================
 #         dataS2=tstarsub.buildd(saving,staS2lst,bestfcs,'S',2)  ## USE IT WHEN fcs IS GIVEN OR CALCULATED BY GRID SEARCH
 # =============================================================================
-        GS2=tstarsub.buildG(saving,staS2lst,alpha,'S',2)
+        GS2=tstarsub.buildG(saving,staS2lst,alpha,'S',2,mw_flag)
         ialco=alpha.index(bestalpha)
         GS2inv=np.linalg.inv(np.dot(GS2[:,:,ialco].transpose(),GS2[:,:,ialco]))
 ########## ALLOW m0(S) TO BE DIFFERENT FROM m0(P) ##
@@ -911,7 +979,7 @@ for ior in range(len(oridlst)):
             print('Not enough good S wave record for %s.' % orid)
             continue
         dataS3=tstarsub.buildd(saving,staS3lst,bestfcs,'S',3,lnmomenS)
-        GS3=tstarsub.buildG(saving,staS3lst,alpha,'S',3)
+        GS3=tstarsub.buildG(saving,staS3lst,alpha,'S',3,mw_flag)
         ialco=alpha.index(bestalpha)
         GS3inv=np.linalg.inv(np.dot(GS3[:,:,ialco].transpose(),GS3[:,:,ialco]))
 ##        modelS,residuS,mrank,sv=lstsq(GS3[:,:,ialco],dataS3)
